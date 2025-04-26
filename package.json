@@ -1,0 +1,29 @@
+{
+  "name": "apidog-reporter-allure",
+  "version": "1.0",
+  "description": "An adapter for apidog proving reports in allure format",
+  "main": "src/index.js",
+  "preferGlobal": true,
+  "deprecated": false,
+  "keywords": ["apidog", "reporter", "allure"],
+  "files": ["src/", "LICENSE.md"],
+  "license": "Apache-2.0",
+  "author": "Jury Skvortsov",
+  "engines": {
+    "node": ">=6"
+  },
+  "dependencies": {
+    "@budibase/handlebars-helpers": "0.13.1",
+    "chalk": "4.1.2",
+    "cli-progress": "3.10.0",
+    "commander": "6.2.1",
+    "filesize": "6.4.0",
+    "handlebars": "4.7.7",
+    "lodash": "4.17.21",
+    "moment-timezone": "0.5.35",
+    "pretty-ms": "7.0.1"
+  },
+  "peerDependencies": {
+    "apidog-cli": "^1.5.0"
+  }
+}
