@@ -38,8 +38,10 @@ interface collection {
 
 interface summary {
     collection: collection
-    reporterOptions: {
-        name: string
+    options: {
+        reporterOptions: {
+            name: string
+        }
     }
 }
 

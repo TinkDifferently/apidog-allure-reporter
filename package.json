@@ -11,11 +11,10 @@
     "allure"
   ],
   "scripts": {
-    "start": "ts-node index..ts",
     "lint": "eslint . --ext .ts",
-    "build": "babel --extensions .ts ./src -d ./dist & npm install -g --force",
-    "run": "ts-node src/index.ts"
+    "build": "babel --extensions .ts ./src -d ./dist & npm install -g --force"
   },
+  "repository": "https://github.com/TinkDifferently/apidog-allure-reporter",
   "license": "Apache-2.0",
   "author": "Jury Skvortsov",
   "engines": {

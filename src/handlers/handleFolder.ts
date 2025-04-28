@@ -1,6 +1,8 @@
 import {apidogData} from "../models/apidogData";
-import {handleScenario} from "./handleScenaro";
+import allure from "../allure";
+import handleDone from "./handleDone";
 
 export function handleFolder(data: apidogData) {
-    handleScenario(data)
+    allure.startGroup()
+    handleDone(data)
 }
