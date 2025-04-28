@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", // or ES6, depending on your needs
+    "module": "CommonJS",
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}

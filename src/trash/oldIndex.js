@@ -17,8 +17,8 @@ var fs = require('fs'),
         handlebars: handlebars,
     }),
     chalk = require('chalk'),
-    util = require('./util'),
-    logger = require('./logger')
+    util = require('../util'),
+    logger = require('../logger')
 progress = require('cli-progress'),
     /**
      * An object of the default file read preferences.
@@ -62,20 +62,6 @@ module.exports = function PostmanHTMLExtraReporter(
     options,
     collectionRunOptions,
 ) {
-    const log = logger('C:\\Users\\tinkd\\Desktop\\cBridge\\assets');
-    // log(JSON.stringify(Object.getOwnPropertyNames(app)))
-    log(JSON.stringify(app.summary))
-    // log(JSON.stringify(Object.getOwnPropertyNames(app._events)))
-    // const variants=["prerequest","beforeItem","item","request","socketRequest","script","assertion","console","beforeDone","beforeIteration","iteration","beforeScript","beforePrerequest","beforeRequest","beforeSocketRequest","beforeTest","test","beforeAssertion","beforeTestScript","testScript","beforePrerequestScript","prerequestScript","start","done"]
-    // variants.forEach(variant=>app.on(variant, (a, b, c, d, e, f) => {
-    //         log(JSON.stringify(a))
-    //         log(JSON.stringify(b))
-    //         log(JSON.stringify(c))
-    //         log(JSON.stringify(d))
-    //         log(JSON.stringify(e))
-    //         log(JSON.stringify(f))
-    //     }
-    // ))
     if (options.folderId) {
         handleFolderExportHtmlExtra(app, options, collectionRunOptions);
     } else {

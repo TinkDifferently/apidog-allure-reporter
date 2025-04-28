@@ -2,11 +2,20 @@
   "name": "apidog-reporter-allure",
   "version": "1.0",
   "description": "An adapter for apidog proving reports in allure format",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "preferGlobal": true,
   "deprecated": false,
-  "keywords": ["apidog", "reporter", "allure"],
-  "files": ["src/", "LICENSE.md"],
+  "keywords": [
+    "apidog",
+    "reporter",
+    "allure"
+  ],
+  "scripts": {
+    "start": "ts-node index..ts",
+    "lint": "eslint . --ext .ts",
+    "build": "babel --extensions .ts ./src -d ./dist & npm install -g --force",
+    "run": "ts-node src/index.ts"
+  },
   "license": "Apache-2.0",
   "author": "Jury Skvortsov",
   "engines": {
@@ -14,16 +23,47 @@
   },
   "dependencies": {
     "@budibase/handlebars-helpers": "0.13.1",
-    "chalk": "4.1.2",
+    "allure-commandline": "^2.13.8",
+    "allure-js-commons": "^2.13.8",
+    "chalk": "5.2.0",
     "cli-progress": "3.10.0",
-    "commander": "6.2.1",
-    "filesize": "6.4.0",
+    "commander": "9.4.1",
+    "filesize": "8.0.0",
     "handlebars": "4.7.7",
     "lodash": "4.17.21",
-    "moment-timezone": "0.5.35",
-    "pretty-ms": "7.0.1"
+    "minipass": "^7.1.2",
+    "moment": "^2.29.4",
+    "moment-timezone": "0.5.38",
+    "pretty-ms": "8.0.0",
+    "uuid": "^10.0.0"
   },
-  "peerDependencies": {
-    "apidog-cli": "^1.5.0"
-  }
+  "devDependencies": {
+    "@babel/cli": "^7.27.0",
+    "@babel/core": "^7.26.10",
+    "@babel/plugin-transform-modules-commonjs": "^7.26.3",
+    "@babel/preset-typescript": "^7.27.0",
+    "@types/chalk": "^2.2.4",
+    "@types/cli-progress": "^3.11.6",
+    "@types/commander": "^2.12.5",
+    "@types/filesize": "^5.0.2",
+    "@types/handlebars": "^4.1.0",
+    "@types/lodash": "^4.17.16",
+    "@types/minipass": "^3.3.5",
+    "@types/moment-timezone": "^0.5.30",
+    "@types/pretty-ms": "^5.0.1",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.9",
+    "@typescript-eslint/parser": "^5.59.9",
+    "eslint": "^8.39.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "bin": {
+    "apidog-allure-adapter": "./dist/index.js"
+  },
+  "types": "index.d.ts",
+  "files": [
+    "dist/**/*",
+    "LICENSE.md"
+  ]
 }
