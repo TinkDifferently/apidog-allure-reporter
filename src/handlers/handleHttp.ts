@@ -1,7 +1,15 @@
 import {execution} from "../models/apidogDone";
 import {AllureStep, Status} from "allure-js-commons";
 import allure from "../allure";
-import {prettyHeaders} from "../utils";
+import {prettyBody, prettyHeaders} from "../utils";
+
+function formatBody(headers: { key: string, value: string }[], body: string): string {
+    if (!body.length) {
+        return ''
+    }
+    const contentType = headers.find(({key}) => key === 'Content-Type').value
+    return prettyBody(body, contentType);
+}
 
 function handleHttpRequest({
                                requestError,
@@ -20,7 +28,9 @@ function handleHttpRequest({
         allure.startStep('Request', timings.preProcessorsCompleted)
         allure.stepStatus({
             status: Status.PASSED,
-            message: `Headers:\n${prettyHeaders(request.headers)}}${request.body && request.body.raw ? `\n\nBody:\n${JSON.stringify(request.body.raw)}` : ''}`,
+            message: `Headers:\n${prettyHeaders(request.headers)}}${request.body && request.body.raw ? `\n\nBody:\n${
+                formatBody(request.headers, request.body.raw)
+            }` : ''}`,
             end: timings.preProcessorsCompleted
         })
         if (requestError) {
@@ -41,8 +51,8 @@ function handleHttpRequest({
                         response.headers ? prettyHeaders(response.headers) : '[]'
                     }\n\nBody:\n${((bytes: number[]) => {
                         const bytesView = new Uint8Array(bytes);
-                        const result = new TextDecoder().decode(bytesView)
-                        return result.length ? JSON.stringify(JSON.parse(result)) : '';
+                        const content = new TextDecoder().decode(bytesView)
+                        return formatBody(response.headers, content)
                     })(response.stream)}`
                 }
             )

@@ -63,7 +63,7 @@ export type request = {
     baseUrl: string,
     body: {
         mode: string,
-        raw: unknown,
+        raw: string,
     },
     auth: {
         type: string,
