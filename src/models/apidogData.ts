@@ -34,9 +34,12 @@ interface collection {
     item: ({ item: { id: string }[] })[]
     name: string
     environment: environment
+    ciRunningOptions: {
+        iterationData?: string
+    }
 }
 
-interface summary {
+export interface summary {
     collection: collection
     options: {
         reporterOptions: {

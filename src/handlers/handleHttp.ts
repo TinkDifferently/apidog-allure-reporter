@@ -40,6 +40,12 @@ function handleHttpRequest({
                     message: `Response code: '${requestError.code}'\nReason: '${requestError.message}'`
                 }
             )
+            allure.testStatus(
+                {
+                    message: `[HTTP] ${metaInfo.httpApiMethod} ${metaInfo.httpApiPath}`,
+                    trace: `Response code: '${requestError.code}'\nReason: '${requestError.message}`
+                }
+            )
         } else if (response) {
             allure.stepStatus(
                 {
@@ -68,6 +74,12 @@ function handleHttpRequest({
                         message: responseValidation.schema.message,
                         end: timings.postProcessorsStarted
                     })
+                    allure.testStatus(
+                        {
+                            message: `[HTTP] ${metaInfo.httpApiMethod} ${metaInfo.httpApiPath}`,
+                            trace: `${response ? `Response code: '${response.code}'\n\n` : ''}Schema was invalid: ${responseValidation.schema.message}`
+                        }
+                    )
                 } else {
                     allure.stepStatus({
                         status: Status.PASSED,
@@ -84,6 +96,12 @@ function handleHttpRequest({
                         message: responseValidation.responseCode.message,
                         end: timings.postProcessorsStarted
                     })
+                    allure.testStatus(
+                        {
+                            message: `[HTTP] ${metaInfo.httpApiMethod} ${metaInfo.httpApiPath}`,
+                            trace: responseValidation.responseCode.message
+                        }
+                    )
                 } else {
                     allure.stepStatus({
                         status: Status.PASSED,
@@ -107,7 +125,7 @@ function handleHttpAssertions({assertions}: execution, time: number) {
     let isSuccess = true
     assertions.forEach(assertion => {
         isSuccess &&= assertion.passed
-        allure.startStep(assertion.name)
+        allure.startStep(assertion.name, time)
         if (!assertion.passed) {
             allure.stepStatus({
                 status: Status.FAILED,

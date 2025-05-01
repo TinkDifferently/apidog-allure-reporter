@@ -41,3 +41,57 @@ export function prettyBody(content: string, contentType?: string): string {
             return content
     }
 }
+
+function isIncl(source: string, sub: string, offset: number): boolean {
+    for (let i = 0; i < sub.length; i++) {
+        if (source[offset + i] !== sub[i]) {
+            return false
+        }
+    }
+    return true
+}
+
+export function indexOf(source: string, sub: string, offset: number = 0) {
+    if (offset < 0) {
+        offset = 0
+    }
+    for (let i = offset; i <= source.length - sub.length; i++) {
+        if (isIncl(source, sub, i)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+export function parseTestDataRow(row: string): string[] {
+    const result: string[] = []
+    while (row.length !== 0) {
+        if (row.startsWith(',')) {
+            row = row.substring(1)
+        }
+        if (row.startsWith('"""')) {
+            const index = indexOf(row, '"""', 3)
+            result.push(row.substring(3, index))
+            row = row.substring(index)
+            continue
+        }
+        if (row.startsWith('"')) {
+            const index = indexOf(row, '"', 1)
+            result.push(row.substring(1, index))
+            row = row.substring(index)
+            continue
+        }
+        const index = row.indexOf(',')
+        if (index < 0) {
+            result.push(row)
+            break
+        }
+        if (index === 0) {
+            result.push('')
+            continue
+        }
+        result.push(row.substring(0, index))
+        row = row.substring(index)
+    }
+    return result
+}

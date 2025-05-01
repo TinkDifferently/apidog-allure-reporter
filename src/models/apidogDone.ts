@@ -1,5 +1,14 @@
 type stat = { total: number, passed: number, failed: number }
 
+export type timings = {
+    started: number,
+    completed: number
+}
+
+export type executionTimings = timings & {
+    preProcessorsCompleted: number,
+    postProcessorsStarted: number,
+}
 
 export type assertion = {
     name: string,
@@ -118,22 +127,12 @@ export type execution = {
             "message": string
         }
     }
-    timings: {
-        started: number,
-        preProcessorsCompleted
-            :
-            number,
-        postProcessorsStarted
-            :
-            number,
-        completed
-            :
-            number
-    },
+    timings: executionTimings,
     assertions: assertion[]
     scriptErrors: scriptError[]
     cursor: {
         requestIndex: number
+        iteration: number
     }
     passed: boolean,
 }
@@ -152,10 +151,7 @@ export type doneData = {
         testScripts: stat,
         prerequestScripts: stat,
     },
-    timings: {
-        started: number,
-        completed: number
-    },
+    timings: timings,
     executions: execution[],
     assertions: assertion[],
     scriptErrors: scriptError[],

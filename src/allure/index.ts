@@ -3,7 +3,7 @@ import {
     AllureGroup,
     AllureRuntime,
     AllureStep,
-    AllureTest,
+    AllureTest, Category,
     Status,
     StatusDetails
 } from "allure-js-commons";
@@ -15,6 +15,7 @@ type stepHolder = {
 }
 
 type allureWrapper = {
+    testStatusDetails?: StatusDetails
     allureConfig: AllureConfig
     allureRuntime: AllureRuntime
     currentGroup?: AllureGroup
@@ -27,11 +28,11 @@ type allureWrapper = {
     endTest: (end?: number) => void
     endStep: (end?: number) => void
     stepStatus: (payload: { status?: Status, message?: string, trace?: string, end?: number }) => void
-    // addAttachment: () => void
+    testStatus: (payload: { message: string, trace?: string }) => void
 }
 
 const allureConfig: AllureConfig = {
-    resultsDir: 'allure-results'
+    resultsDir: 'allure-results',
 }
 
 const allureAdapter = function () {
@@ -108,6 +109,20 @@ const allureAdapter = function () {
             }
             if (end) {
                 this.endStep(end)
+            }
+        },
+        testStatus: function (this: allureWrapper, {message, trace}) {
+            if (this.testStatusDetails) {
+                return
+            }
+            if (!this.currentTest) {
+                console.log('No test was running')
+                return;
+            }
+            if (message || trace) {
+                this.currentTest.statusDetails = {
+                    message, trace
+                }
             }
         }
     }
