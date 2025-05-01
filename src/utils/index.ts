@@ -78,7 +78,7 @@ export function parseTestDataRow(row: string): string[] {
         if (row.startsWith('"')) {
             const index = indexOf(row, '"', 1)
             result.push(row.substring(1, index))
-            row = row.substring(index)
+            row = row.substring(index + 1)
             continue
         }
         const index = row.indexOf(',')
