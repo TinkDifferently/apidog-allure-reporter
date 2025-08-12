@@ -2,7 +2,16 @@ import {execution} from "../models/apidogDone";
 import allure from "../allure";
 import {Status} from "allure-js-commons";
 
-function handleScriptErrors({scriptErrors, name}: execution) {
+function handleScriptErrors({scriptErrors, name, timings}: execution) {
+    if (!scriptErrors) {
+        console.log(`Could not attach additional info for '${name}'`)
+        console.log(JSON.stringify(scriptErrors))
+        allure.stepStatus({
+            status: Status.FAILED,
+            end: timings.completed
+        })
+        return
+    }
     scriptErrors.map(scriptError => scriptError.error).sort((a1, a2) => a1.timestamp - a2.timestamp).forEach(({
                                                                                                                   message,
                                                                                                                   timestamp
@@ -18,10 +27,10 @@ function handleScriptErrors({scriptErrors, name}: execution) {
             status: Status.FAILED,
             end: timestamp
         })
-        allure.stepStatus({
-            status: Status.FAILED,
-            end: timestamp
-        })
+    })
+    allure.stepStatus({
+        status: Status.FAILED,
+        end: timings.completed
     })
 }
 

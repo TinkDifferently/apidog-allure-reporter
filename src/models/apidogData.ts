@@ -1,65 +1,94 @@
-const eventTypes = ["prerequest"
-    , "beforeItem"
-    , "item"
-    , "request"
-    , "socketRequest"
-    , "script"
-    , "assertion"
-    , "console"
-    , "beforeDone"
-    , "beforeIteration"
-    , "iteration"
-    , "beforeScript"
-    , "beforePrerequest"
-    , "beforeRequest"
-    , "beforeSocketRequest"
-    , "beforeTest"
-    , "test"
-    , "beforeAssertion"
-    , "beforeTestScript"
-    , "testScript"
-    , "beforePrerequestScript"
-    , "prerequestScript"
-    , "start"
-    , "done"] as const
+import {loadJson} from "../files";
 
-type eventType = typeof eventTypes[number]
+export type stepType = "testCaseRef" | "script"
 
-
-interface environment {
-    name: string
+export type step = {
+    id: string,
+    type: stepType,
+    disable: false,
+    parameters: object,
+    relatedId: number,
+    name: string,
+    number: number
 }
 
-interface collection {
-    item: ({ item: { id: string }[] })[]
-    name: string
-    environment: environment
-    ciRunningOptions: {
-        iterationData?: string
+export type testCase = {
+    steps: step[],
+    id: number,
+    name: string,
+    tags: string[]
+}
+
+export type folder = {
+    name: string,
+    children: folder[],
+    items: testCase[]
+}
+
+type node = folder | testCase
+
+export type apidogData = {
+    apiTestCaseCollection: node[]
+}
+
+export function isFolder(node: node): node is folder {
+    return !node.hasOwnProperty('id');
+}
+
+const apidogData: apidogData | undefined = (function (): apidogData | undefined {
+    console.log('Parsing apidog model')
+    const result = loadJson('apidogExport.json') as apidogData | undefined
+    if (!result) {
+        console.log('Could not parse apidog data')
     }
-}
+    return result
+})()
 
-export interface summary {
-    collection: collection
-    options: {
-        reporterOptions: {
-            name: string
+export type testPathInfo = { path: string[], id: number, name: string, tags: string[] }
+
+function getTestPath(node: folder, name: string, folderName?: string, path?: string[]): testPathInfo | undefined {
+    const basePath: string[] = folderName
+        ? path
+            ? [...path, folderName]
+            : [folderName]
+        : [];
+    if (!folderName || basePath.includes(folderName)) {
+        const testCase = node.items.find((node) => node.name === name) as testCase
+        if (testCase) {
+            return {
+                ...testCase,
+                path: basePath,
+            }
         }
     }
+    for (const child of node.children) {
+        const testCase = getTestPath(child, name, folderName, basePath)
+        if (testCase) {
+            return testCase
+        }
+    }
+    return undefined
 }
 
-export interface app {
-    summary: summary
-    on: (eventType: eventType, callback: (err: unknown, data: unknown) => void) => void
-    _events: string
+export function findTestCase(name: string, folderName?: string): testPathInfo | undefined {
+    if (apidogData) {
+        for (const node of apidogData.apiTestCaseCollection) {
+            if (isFolder(node)) {
+                const path = getTestPath(node, name, folderName)
+                if (path) {
+                    return path
+                }
+                continue
+            }
+            if (node.name === name) {
+                return {
+                    ...node,
+                    path: []
+                }
+            }
+        }
+    }
+    return undefined
 }
 
-export interface options {
-    folderId: number
-}
-
-export interface apidogData {
-    app: app,
-    options: options,
-    collectionRunOptions: unknown
-}
+export default apidogData

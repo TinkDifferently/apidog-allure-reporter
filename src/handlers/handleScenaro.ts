@@ -1,8 +1,8 @@
-import allure from "../allure";
-import {apidogData} from "../models/apidogData";
+import {apidogRuntimeData} from "../models/apidogRuntimeData";
 import handleDone from "./handleDone";
+import apidogData, {findTestCase} from "../models/apidogData";
 
-export function handleScenario(apidogData: apidogData) {
-    allure.startGroup()
-    handleDone(apidogData)
+export function handleScenario(apidogData: apidogData | undefined, runtimeData: apidogRuntimeData) {
+    const path = findTestCase(runtimeData.app.summary.collection.name)
+    handleDone(runtimeData, path)
 }

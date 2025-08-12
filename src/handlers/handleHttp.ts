@@ -17,7 +17,8 @@ function handleHttpRequest({
                                timings,
                                request,
                                response,
-                               responseValidation
+                               responseValidation,
+                               scriptErrors
                            }: execution, step: AllureStep) {
     step.addParameter('name', metaInfo.httpApiName)
     if (request) {
@@ -109,11 +110,31 @@ function handleHttpRequest({
                     })
                 }
             }
+            if (scriptErrors && scriptErrors.length > 0) {
+                scriptErrors.map(({error}) => error).sort((a1, a2) => a1.timestamp - a2.timestamp).forEach(({
+                                                                                                                name,
+                                                                                                                message,
+                                                                                                                timestamp
+                                                                                                            }) => {
+                    allure.testStatus(
+                        {
+                            message
+                        }
+                    )
+                    allure.startStep(message, timestamp)
+                    allure.stepStatus({
+                        status: Status.FAILED,
+                        end: timestamp
+                    })
+                    isCorrect = false
+                })
+            }
             allure.stepStatus({
                 status: isCorrect ? Status.PASSED : Status.FAILED,
             })
         }
     }
+
     allure.endStep(timings.postProcessorsStarted)
 }
 

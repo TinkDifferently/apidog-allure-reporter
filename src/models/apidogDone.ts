@@ -129,7 +129,7 @@ export type execution = {
     }
     timings: executionTimings,
     assertions: assertion[]
-    scriptErrors: scriptError[]
+    scriptErrors?: scriptError[]
     cursor: {
         requestIndex: number
         iteration: number

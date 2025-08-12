@@ -115,14 +115,15 @@ const allureAdapter = function () {
             if (this.testStatusDetails) {
                 return
             }
+            this.testStatusDetails = {
+                message, trace
+            }
             if (!this.currentTest) {
                 console.log('No test was running')
                 return;
             }
             if (message || trace) {
-                this.currentTest.statusDetails = {
-                    message, trace
-                }
+                this.currentTest.statusDetails = this.testStatusDetails
             }
         }
     }

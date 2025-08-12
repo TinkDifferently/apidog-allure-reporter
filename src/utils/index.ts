@@ -1,3 +1,7 @@
+export function buildUrl(host: string, path: string) {
+    return new URL(path, host);
+}
+
 const formats = ['json', 'html', 'xml'] as const
 
 type format = 'raw' | typeof formats[number]
@@ -16,7 +20,6 @@ export function safe<T>(callback: () => T, defaultValue?: T) {
     try {
         return callback()
     } catch (e) {
-        console.log(e)
         return defaultValue
     }
 }

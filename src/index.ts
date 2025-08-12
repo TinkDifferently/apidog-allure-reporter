@@ -1,6 +1,7 @@
-import {apidogData, app, options} from "./models/apidogData";
+import {apidogRuntimeData, app, options} from "./models/apidogRuntimeData";
 import {handleFolder} from "./handlers/handleFolder";
 import {handleScenario} from "./handlers/handleScenaro";
+import apidogData from "./models/apidogData";
 
 
 export function allureReporter(
@@ -8,12 +9,12 @@ export function allureReporter(
     options: options,
     collectionRunOptions: unknown,
 ) {
-    const data: apidogData = {
+    const runtimeData: apidogRuntimeData = {
         app,
         options,
         collectionRunOptions
     }
-    options.folderId ? handleFolder(data) : handleScenario(data)
+    options.folderId ? handleFolder(apidogData, runtimeData) : handleScenario(apidogData, runtimeData)
 }
 
 module.exports = allureReporter;
