@@ -7,7 +7,7 @@ function formatBody(headers: { key: string, value: string }[], body: string): st
     if (!body.length) {
         return ''
     }
-    const contentType = headers.find(({key}) => key === 'Content-Type').value
+    const contentType = headers.find(({key}) => key === 'Content-Type')?.value
     return prettyBody(body, contentType);
 }
 
@@ -60,7 +60,7 @@ function handleHttpRequest({
                         const bytesView = new Uint8Array(bytes);
                         const content = new TextDecoder().decode(bytesView)
                         return formatBody(response.headers, content)
-                    })(response.stream)}`
+                    })(response.stream.data)}`
                 }
             )
         }

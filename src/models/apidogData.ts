@@ -32,7 +32,7 @@ export type apidogData = {
 }
 
 export function isFolder(node: node): node is folder {
-    return !node.hasOwnProperty('id');
+    return !node.hasOwnProperty('steps');
 }
 
 const apidogData: apidogData | undefined = (function (): apidogData | undefined {
@@ -46,46 +46,32 @@ const apidogData: apidogData | undefined = (function (): apidogData | undefined 
 
 export type testPathInfo = { path: string[], id: number, name: string, tags: string[] }
 
-function getTestPath(node: folder, name: string, folderName?: string, path?: string[]): testPathInfo | undefined {
-    const basePath: string[] = folderName
-        ? path
-            ? [...path, folderName]
-            : [folderName]
-        : [];
-    if (!folderName || basePath.includes(folderName)) {
-        const testCase = node.items.find((node) => node.name === name) as testCase
-        if (testCase) {
-            return {
-                ...testCase,
-                path: basePath,
-            }
-        }
+function getTestPath(node: folder, name: string, path: string[] = []): testPathInfo | undefined {
+    const currentPath = [...path, node.name]
+    const testCase = node.items.find(item => item.name === name)
+    if (testCase) {
+        return { ...testCase, path: currentPath }
     }
     for (const child of node.children) {
-        const testCase = getTestPath(child, name, folderName, basePath)
-        if (testCase) {
-            return testCase
-        }
+        const result = getTestPath(child, name, currentPath)
+        if (result) return result
     }
     return undefined
 }
 
-export function findTestCase(name: string, folderName?: string): testPathInfo | undefined {
-    if (apidogData) {
-        for (const node of apidogData.apiTestCaseCollection) {
-            if (isFolder(node)) {
-                const path = getTestPath(node, name, folderName)
-                if (path) {
-                    return path
-                }
-                continue
+export function findTestCase(name: string): testPathInfo | undefined {
+    if (!apidogData) return undefined
+    for (const node of apidogData.apiTestCaseCollection) {
+        if (isFolder(node)) {
+            // The top-level node is a "Root" container — start paths from its children
+            for (const child of node.children) {
+                const result = getTestPath(child, name)
+                if (result) return result
             }
-            if (node.name === name) {
-                return {
-                    ...node,
-                    path: []
-                }
-            }
+            const direct = node.items.find(i => i.name === name)
+            if (direct) return { ...direct, path: [] }
+        } else if (node.name === name) {
+            return { ...(node as testCase), path: [] }
         }
     }
     return undefined

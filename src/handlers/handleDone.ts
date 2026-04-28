@@ -24,6 +24,7 @@ type testRunInfo = {
     executions: execution[],
     timings: timings,
     pathInfo?: testPathInfo
+    issueLinkLabel: string
 }
 
 type multiRunInfo = testRunInfo & {
@@ -73,54 +74,60 @@ async function handleSingleRun({
                                    timings,
                                    variables,
                                    pathInfo,
-                                   isLast
+                                   isLast,
+                                   issueLinkLabel
                                }: singleRunInfo,
                                {options}: summary) {
     const sorted = executions.sort((sourceA, sourceB) => sourceA.cursor.requestIndex - sourceB.cursor.requestIndex)
     await async function () {
         try {
             const id = await getId(name)
+
+            // Classify tags once so override logic and label application share the same data
+            const tags = pathInfo?.tags ?? []
+            const issueTags = tags.filter(t => /^LB-\d+$/.test(t))
+            const kvEntries: [string, string][] = tags
+                .map(t => t.match(/^([^=]+)=(.+)$/))
+                .filter((m): m is RegExpMatchArray => m !== null)
+                .map(m => [m[1].charAt(0).toUpperCase() + m[1].slice(1), m[2]])
+            const regularTags = tags.filter(t => !/^LB-\d+$/.test(t) && !/^[^=]+=.+$/.test(t))
+            const overrides = new Map<string, string>(kvEntries)
+
             allure.startTest(name, timings.started)
-            allure.currentTest?.addLabel(
-                LabelName.FRAMEWORK,
-                "apidog"
-            )
+            allure.currentTest?.addLabel(LabelName.FRAMEWORK, "apidog")
+
             if (pathInfo) {
                 allure.currentTest?.addLabel(
                     LabelName.PACKAGE,
-                    `${pathInfo?.path.join('.')}.${pathInfo?.id}`
+                    `${pathInfo.path.join('.')}.${pathInfo.id}`
                 )
+                const [epic, feature, story] = pathInfo.path
+                const resolvedEpic = overrides.get(LabelName.EPIC) ?? epic
+                const resolvedFeature = overrides.get(LabelName.FEATURE) ?? feature
+                const resolvedStory = overrides.get(LabelName.STORY) ?? story ?? name
+                if (resolvedEpic) allure.currentTest?.addLabel(LabelName.EPIC, resolvedEpic)
+                if (resolvedFeature) allure.currentTest?.addLabel(LabelName.FEATURE, resolvedFeature)
+                allure.currentTest?.addLabel(LabelName.STORY, resolvedStory)
             }
-            if (options.reporterOptions.name) {
-                console.log(`Processing ${options.reporterOptions.name}: '${name}'`)
-                allure.currentTest?.addLabel(
-                    LabelName.SUITE,
-                    options.reporterOptions.name
-                )
-                allure.currentTest?.addLabel(
-                    LabelName.EPIC,
-                    "Design time",
-                )
-                allure.currentTest?.addLabel(
-                    LabelName.FEATURE,
-                    options.reporterOptions.name,
-                )
-            } else {
-                console.log(`Processing '${name}'`)
-            }
+
+            allure.currentTest?.addLabel('Component', overrides.get('Component') ?? 'Control-plane')
+
+            console.log(`Processing '${name}'`)
             allure.currentTest?.addParameter('env', env)
             variables.forEach(({key, value}) => allure.currentTest?.addParameter(key, value))
             let hasPassed = true
             sorted.forEach(item => hasPassed &&= handleExecution(item))
+            // Apply tags regardless of TestOps availability
+            const managedLabels = new Set([LabelName.EPIC, LabelName.FEATURE, LabelName.STORY, 'Component'])
+            issueTags.forEach(tag => allure.currentTest?.addLabel(issueLinkLabel, tag))
+            regularTags.forEach(tag => allure.currentTest?.addLabel(LabelName.TAG, tag.toLowerCase()))
+            kvEntries
+                .filter(([k]) => !managedLabels.has(k))
+                .forEach(([k, v]) => allure.currentTest?.addLabel(k, v))
+
             if (id !== undefined) {
                 if (id > 0) {
-                    console.log('tags')
-                    console.log(pathInfo?.tags)
-                    pathInfo?.tags.forEach(tag=>allure.currentTest?.addLabel(LabelName.TAG,tag))
-                    allure.currentTest?.addLabel(
-                        LabelName.ALLURE_ID,
-                        `${id}`
-                    )
+                    allure.currentTest?.addLabel(LabelName.ALLURE_ID, `${id}`)
                 } else {
                     console.log('Could not bind a test to allure testops')
                 }
@@ -140,7 +147,7 @@ async function handleSingleRun({
     }()
 }
 
-function handleMultiRun({env, executions, timings, iterations, name, pathInfo}: multiRunInfo, summary: summary) {
+function handleMultiRun({env, executions, timings, iterations, name, pathInfo, issueLinkLabel}: multiRunInfo, summary: summary) {
     const promises = iterations.dataRows.map((dataRow, index) => async function () {
         try {
             const testName = name.endsWith('.') ? `${name} ${dataRow.name}` : `${name}. ${dataRow.name}`
@@ -154,6 +161,7 @@ function handleMultiRun({env, executions, timings, iterations, name, pathInfo}: 
                 },
                 env,
                 pathInfo,
+                issueLinkLabel,
                 variables: dataRow.values.map((value, index) => {
                     return {
                         key: iterations.headers[index],
@@ -162,7 +170,7 @@ function handleMultiRun({env, executions, timings, iterations, name, pathInfo}: 
                 }),
                 isLast: false
             }, summary)
-        } catch (e: Error) {
+        } catch (e: unknown) {
             console.log("Unexpected error:")
             console.log(JSON.stringify(e))
         }
@@ -173,10 +181,10 @@ function handleMultiRun({env, executions, timings, iterations, name, pathInfo}: 
 }
 
 
-function createOnDone(app: app, pathInfo?: testPathInfo) {
+function createOnDone(app: app, pathInfo?: testPathInfo, issueLinkLabel: string = 'Related') {
     const {name, environment, ciRunningOptions} = app.summary.collection
     const iterations = parseIterations(ciRunningOptions.iterationData)
-    return async function (err, {executions, timings}: doneData) {
+    return async function (_err: unknown, {executions, timings}: doneData) {
         try {
             allure.startGroup()
             if (iterations) {
@@ -186,7 +194,8 @@ function createOnDone(app: app, pathInfo?: testPathInfo) {
                         env: environment.name,
                         executions,
                         timings,
-                        pathInfo
+                        pathInfo,
+                        issueLinkLabel
                     }, app.summary
                 )
             } else {
@@ -196,6 +205,7 @@ function createOnDone(app: app, pathInfo?: testPathInfo) {
                     executions,
                     timings,
                     pathInfo,
+                    issueLinkLabel,
                     variables: [],
                     isLast: true
                 }, app.summary)
@@ -208,8 +218,8 @@ function createOnDone(app: app, pathInfo?: testPathInfo) {
     }
 }
 
-export default function handleDone({app}: apidogRuntimeData, pathInfo?: testPathInfo,) {
-    app.on('done', (err, doneData: doneData) => {
-        createOnDone(app, pathInfo)(err, doneData)
+export default function handleDone({app, options}: apidogRuntimeData, pathInfo?: testPathInfo,) {
+    app.on('done', (err, data: unknown) => {
+        createOnDone(app, pathInfo, options.issueLinkLabel)(err, data as doneData)
     })
 }

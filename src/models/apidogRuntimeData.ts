@@ -56,6 +56,7 @@ export interface app {
 
 export interface options {
     folderId: number
+    issueLinkLabel?: string
 }
 
 export interface apidogRuntimeData {

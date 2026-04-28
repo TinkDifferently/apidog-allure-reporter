@@ -7,9 +7,10 @@ const formats = ['json', 'html', 'xml'] as const
 type format = 'raw' | typeof formats[number]
 
 export function joinMethods(obj: object) {
-    const propertyNames = Object.getOwnPropertyNames(obj)
-    propertyNames.filter(propertyName => typeof obj[propertyName] === "function")
-        .forEach(propertyName => obj[propertyName] = obj[propertyName].bind(obj))
+    const record = obj as Record<string, unknown>
+    const propertyNames = Object.getOwnPropertyNames(record)
+    propertyNames.filter(propertyName => typeof record[propertyName] === "function")
+        .forEach(propertyName => record[propertyName] = (record[propertyName] as Function).bind(record))
 }
 
 export function prettyHeaders(headers: { key: string, value: string }[]) {

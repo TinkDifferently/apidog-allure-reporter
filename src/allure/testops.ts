@@ -85,9 +85,9 @@ export async function getId(testName: string, suite?: string): Promise<number | 
     if (!authToken) {
         return -1
     }
-    const id = await getCaseId(endpoint, project as number, authToken, testName)
+    const id = await getCaseId(endpoint, Number(project), authToken, testName)
     if (id === -1) {
-        const createdId = await createTestCase(endpoint, project as number, authToken, testName)
+        const createdId = await createTestCase(endpoint, Number(project), authToken, testName)
         if (createdId > 0) {
             return createdId
         }
