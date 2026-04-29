@@ -101,7 +101,7 @@ async function handleSingleRun({
                     LabelName.PACKAGE,
                     `${pathInfo.path.join('.')}.${pathInfo.id}`
                 )
-                const [epic, feature, story] = pathInfo.path
+                const [epic, feature, story] = pathInfo.path.slice(-3)
                 const resolvedEpic = overrides.get(LabelName.EPIC) ?? epic
                 const resolvedFeature = overrides.get(LabelName.FEATURE) ?? feature
                 const resolvedStory = overrides.get(LabelName.STORY) ?? story ?? name
