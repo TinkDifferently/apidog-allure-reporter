@@ -115,6 +115,12 @@ async function handleSingleRun({
             console.log(`Processing '${name}'`)
             allure.currentTest?.addParameter('env', env)
             variables.forEach(({key, value}) => allure.currentTest?.addParameter(key, value))
+            const httpCalls = sorted
+                .filter(e => e.metaInfo?.type === 'http' && e.metaInfo?.httpApiPath)
+                .map(e => `${(e.metaInfo.httpApiMethod || '').toUpperCase()} ${e.metaInfo.httpApiPath}`)
+            if (httpCalls.length > 0 && allure.currentTest) {
+                allure.currentTest.description = httpCalls.map(c => `- ${c}`).join('\n')
+            }
             let hasPassed = true
             sorted.forEach(item => hasPassed &&= handleExecution(item))
             // Apply tags regardless of TestOps availability
