@@ -20,9 +20,11 @@ export type testCase = {
 }
 
 export type folder = {
+    id?: number,
     name: string,
     children: folder[],
-    items: testCase[]
+    items: testCase[],
+    tags?: string[]
 }
 
 type node = folder | testCase
@@ -52,6 +54,9 @@ function getTestPath(node: folder, name: string, path: string[] = []): testPathI
     if (testCase) {
         return { ...testCase, path: currentPath }
     }
+    if (node.name === name) {
+        return { id: node.id ?? 0, name: node.name, tags: node.tags ?? [], path: currentPath }
+    }
     for (const child of node.children) {
         const result = getTestPath(child, name, currentPath)
         if (result) return result
@@ -61,7 +66,12 @@ function getTestPath(node: folder, name: string, path: string[] = []): testPathI
 
 export function findTestCase(name: string): testPathInfo | undefined {
     if (!apidogData) return undefined
-    for (const node of apidogData.apiTestCaseCollection) {
+    const collection = apidogData.apiTestCaseCollection
+    if (!Array.isArray(collection)) {
+        console.log(`[apidog-allure] apiTestCaseCollection is not an array (got ${typeof collection}). Available keys: ${Object.keys(apidogData).join(', ')}`)
+        return undefined
+    }
+    for (const node of collection) {
         if (isFolder(node)) {
             // The top-level node is a "Root" container — start paths from its children
             for (const child of node.children) {

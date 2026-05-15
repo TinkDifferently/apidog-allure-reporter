@@ -110,27 +110,26 @@ function handleHttpRequest({
                     })
                 }
             }
-            if (scriptErrors && scriptErrors.length > 0) {
-                scriptErrors.map(({error}) => error).sort((a1, a2) => a1.timestamp - a2.timestamp).forEach(({
-                                                                                                                name,
-                                                                                                                message,
-                                                                                                                timestamp
-                                                                                                            }) => {
-                    allure.testStatus(
-                        {
-                            message
-                        }
-                    )
-                    allure.startStep(message, timestamp)
-                    allure.stepStatus({
-                        status: Status.FAILED,
-                        end: timestamp
-                    })
-                    isCorrect = false
-                })
-            }
             allure.stepStatus({
                 status: isCorrect ? Status.PASSED : Status.FAILED,
+            })
+        }
+        if (scriptErrors && scriptErrors.length > 0) {
+            scriptErrors.map(({error}) => error).sort((a1, a2) => a1.timestamp - a2.timestamp).forEach(({
+                                                                                                            name,
+                                                                                                            message,
+                                                                                                            timestamp
+                                                                                                        }) => {
+                allure.testStatus(
+                    {
+                        message
+                    }
+                )
+                allure.startStep(message, timestamp)
+                allure.stepStatus({
+                    status: Status.FAILED,
+                    end: timestamp
+                })
             })
         }
     }
@@ -152,6 +151,10 @@ function handleHttpAssertions({assertions}: execution, time: number) {
                 status: Status.FAILED,
                 message: JSON.stringify(assertion.error),
                 end: time
+            })
+            allure.testStatus({
+                message: assertion.name,
+                trace: JSON.stringify(assertion.error)
             })
         } else {
             allure.stepStatus({

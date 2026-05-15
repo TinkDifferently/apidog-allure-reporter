@@ -25,6 +25,7 @@ type testRunInfo = {
     timings: timings,
     pathInfo?: testPathInfo
     issueLinkLabel: string
+    issueLinkPattern: string
 }
 
 type multiRunInfo = testRunInfo & {
@@ -75,7 +76,8 @@ async function handleSingleRun({
                                    variables,
                                    pathInfo,
                                    isLast,
-                                   issueLinkLabel
+                                   issueLinkLabel,
+                                   issueLinkPattern
                                }: singleRunInfo,
                                {options}: summary) {
     const sorted = executions.sort((sourceA, sourceB) => sourceA.cursor.requestIndex - sourceB.cursor.requestIndex)
@@ -85,12 +87,13 @@ async function handleSingleRun({
 
             // Classify tags once so override logic and label application share the same data
             const tags = pathInfo?.tags ?? []
-            const issueTags = tags.filter(t => /^LB-\d+$/.test(t))
+            const issueRegex = new RegExp(`^(?:${issueLinkPattern})$`)
+            const issueTags = tags.filter(t => issueRegex.test(t))
             const kvEntries: [string, string][] = tags
                 .map(t => t.match(/^([^=]+)=(.+)$/))
                 .filter((m): m is RegExpMatchArray => m !== null)
                 .map(m => [m[1].charAt(0).toUpperCase() + m[1].slice(1), m[2]])
-            const regularTags = tags.filter(t => !/^LB-\d+$/.test(t) && !/^[^=]+=.+$/.test(t))
+            const regularTags = tags.filter(t => !issueRegex.test(t) && !/^[^=]+=.+$/.test(t))
             const overrides = new Map<string, string>(kvEntries)
 
             allure.startTest(name, timings.started)
@@ -153,7 +156,7 @@ async function handleSingleRun({
     }()
 }
 
-function handleMultiRun({env, executions, timings, iterations, name, pathInfo, issueLinkLabel}: multiRunInfo, summary: summary) {
+function handleMultiRun({env, executions, timings, iterations, name, pathInfo, issueLinkLabel, issueLinkPattern}: multiRunInfo, summary: summary) {
     const promises = iterations.dataRows.map((dataRow, index) => async function () {
         try {
             const testName = name.endsWith('.') ? `${name} ${dataRow.name}` : `${name}. ${dataRow.name}`
@@ -168,6 +171,7 @@ function handleMultiRun({env, executions, timings, iterations, name, pathInfo, i
                 env,
                 pathInfo,
                 issueLinkLabel,
+                issueLinkPattern,
                 variables: dataRow.values.map((value, index) => {
                     return {
                         key: iterations.headers[index],
@@ -187,7 +191,7 @@ function handleMultiRun({env, executions, timings, iterations, name, pathInfo, i
 }
 
 
-function createOnDone(app: app, pathInfo?: testPathInfo, issueLinkLabel: string = 'Related') {
+function createOnDone(app: app, pathInfo?: testPathInfo, issueLinkLabel: string = 'Related', issueLinkPattern: string = 'LB-\\d+') {
     const {name, environment, ciRunningOptions} = app.summary.collection
     const iterations = parseIterations(ciRunningOptions.iterationData)
     return async function (_err: unknown, {executions, timings}: doneData) {
@@ -201,7 +205,8 @@ function createOnDone(app: app, pathInfo?: testPathInfo, issueLinkLabel: string 
                         executions,
                         timings,
                         pathInfo,
-                        issueLinkLabel
+                        issueLinkLabel,
+                        issueLinkPattern
                     }, app.summary
                 )
             } else {
@@ -212,6 +217,7 @@ function createOnDone(app: app, pathInfo?: testPathInfo, issueLinkLabel: string 
                     timings,
                     pathInfo,
                     issueLinkLabel,
+                    issueLinkPattern,
                     variables: [],
                     isLast: true
                 }, app.summary)
@@ -226,6 +232,6 @@ function createOnDone(app: app, pathInfo?: testPathInfo, issueLinkLabel: string 
 
 export default function handleDone({app, options}: apidogRuntimeData, pathInfo?: testPathInfo,) {
     app.on('done', (err, data: unknown) => {
-        createOnDone(app, pathInfo, options.issueLinkLabel)(err, data as doneData)
+        createOnDone(app, pathInfo, options.issueLinkLabel, options.issueLinkPattern)(err, data as doneData)
     })
 }

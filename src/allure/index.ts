@@ -112,9 +112,6 @@ const allureAdapter = function () {
             }
         },
         testStatus: function (this: allureWrapper, {message, trace}) {
-            if (this.testStatusDetails) {
-                return
-            }
             this.testStatusDetails = {
                 message, trace
             }
