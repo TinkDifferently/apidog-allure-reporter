@@ -26,6 +26,7 @@ type testRunInfo = {
     pathInfo?: testPathInfo
     issueLinkLabel: string
     issueLinkPattern: string
+    component: string
 }
 
 type multiRunInfo = testRunInfo & {
@@ -77,7 +78,8 @@ async function handleSingleRun({
                                    pathInfo,
                                    isLast,
                                    issueLinkLabel,
-                                   issueLinkPattern
+                                   issueLinkPattern,
+                                   component
                                }: singleRunInfo,
                                {options}: summary) {
     const sorted = executions.sort((sourceA, sourceB) => sourceA.cursor.requestIndex - sourceB.cursor.requestIndex)
@@ -113,7 +115,7 @@ async function handleSingleRun({
                 allure.currentTest?.addLabel(LabelName.STORY, resolvedStory)
             }
 
-            allure.currentTest?.addLabel('Component', overrides.get('Component') ?? 'Control-plane')
+            allure.currentTest?.addLabel('Component', overrides.get('Component') ?? component)
 
             console.log(`Processing '${name}'`)
             allure.currentTest?.addParameter('env', env)
@@ -156,7 +158,7 @@ async function handleSingleRun({
     }()
 }
 
-function handleMultiRun({env, executions, timings, iterations, name, pathInfo, issueLinkLabel, issueLinkPattern}: multiRunInfo, summary: summary) {
+function handleMultiRun({env, executions, timings, iterations, name, pathInfo, issueLinkLabel, issueLinkPattern, component}: multiRunInfo, summary: summary) {
     const promises = iterations.dataRows.map((dataRow, index) => async function () {
         try {
             const testName = name.endsWith('.') ? `${name} ${dataRow.name}` : `${name}. ${dataRow.name}`
@@ -172,6 +174,7 @@ function handleMultiRun({env, executions, timings, iterations, name, pathInfo, i
                 pathInfo,
                 issueLinkLabel,
                 issueLinkPattern,
+                component,
                 variables: dataRow.values.map((value, index) => {
                     return {
                         key: iterations.headers[index],
@@ -191,7 +194,7 @@ function handleMultiRun({env, executions, timings, iterations, name, pathInfo, i
 }
 
 
-function createOnDone(app: app, pathInfo?: testPathInfo, issueLinkLabel: string = 'Related', issueLinkPattern: string = 'LB-\\d+') {
+function createOnDone(app: app, pathInfo?: testPathInfo, issueLinkLabel: string = 'Related', issueLinkPattern: string = 'LB-\\d+', component: string = 'Control Plane') {
     const {name, environment, ciRunningOptions} = app.summary.collection
     const iterations = parseIterations(ciRunningOptions.iterationData)
     return async function (_err: unknown, {executions, timings}: doneData) {
@@ -206,7 +209,8 @@ function createOnDone(app: app, pathInfo?: testPathInfo, issueLinkLabel: string 
                         timings,
                         pathInfo,
                         issueLinkLabel,
-                        issueLinkPattern
+                        issueLinkPattern,
+                        component
                     }, app.summary
                 )
             } else {
@@ -218,6 +222,7 @@ function createOnDone(app: app, pathInfo?: testPathInfo, issueLinkLabel: string 
                     pathInfo,
                     issueLinkLabel,
                     issueLinkPattern,
+                    component,
                     variables: [],
                     isLast: true
                 }, app.summary)
@@ -231,7 +236,8 @@ function createOnDone(app: app, pathInfo?: testPathInfo, issueLinkLabel: string 
 }
 
 export default function handleDone({app, options}: apidogRuntimeData, pathInfo?: testPathInfo,) {
+    const component = process.env.ALLURE_COMPONENT ?? options.component ?? 'Control Plane'
     app.on('done', (err, data: unknown) => {
-        createOnDone(app, pathInfo, options.issueLinkLabel, options.issueLinkPattern)(err, data as doneData)
+        createOnDone(app, pathInfo, options.issueLinkLabel, options.issueLinkPattern, component)(err, data as doneData)
     })
 }

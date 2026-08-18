@@ -11,6 +11,28 @@ function formatBody(headers: { key: string, value: string }[], body: string): st
     return prettyBody(body, contentType);
 }
 
+function resolveUrl(request: import('../models/apidogDone').request): string {
+    const variables: Record<string, string> = {}
+    if (request.url.variable) {
+        request.url.variable.forEach(v => { variables[v.key] = v.value })
+    }
+    const path = (request.url.path || [])
+        .map(segment => {
+            return segment.replace(/\{\{([^}]+)\}\}/g, (_, key) => variables[key] ?? `{{${key}}}`)
+        })
+        .join('/')
+    const base = request.baseUrl.replace(/\/$/, '')
+    let url = path ? `${base}/${path}` : base
+    if (request.url.query && (request.url.query as any[]).length > 0) {
+        const qs = (request.url.query as {key: string, value: string}[])
+            .filter(q => q.key)
+            .map(q => `${encodeURIComponent(q.key)}=${encodeURIComponent(q.value ?? '')}`)
+            .join('&')
+        if (qs) url += `?${qs}`
+    }
+    return url
+}
+
 function handleHttpRequest({
                                requestError,
                                metaInfo,
@@ -22,14 +44,16 @@ function handleHttpRequest({
                            }: execution, step: AllureStep) {
     step.addParameter('name', metaInfo.httpApiName)
     if (request) {
-        step.addParameter('host', request.baseUrl)
+        const resolvedUrl = resolveUrl(request)
+        step.addParameter('url', resolvedUrl)
     }
     allure.startStep(`${metaInfo.httpApiMethod} ${metaInfo.httpApiPath}`, timings.preProcessorsCompleted)
     if (request) {
+        const resolvedUrl = resolveUrl(request)
         allure.startStep('Request', timings.preProcessorsCompleted)
         allure.stepStatus({
             status: Status.PASSED,
-            message: `Headers:\n${prettyHeaders(request.headers)}}${request.body && request.body.raw ? `\n\nBody:\n${
+            message: `URL: ${resolvedUrl}\n\nHeaders:\n${prettyHeaders(request.headers)}}${request.body && request.body.raw ? `\n\nBody:\n${
                 formatBody(request.headers, request.body.raw)
             }` : ''}`,
             end: timings.preProcessorsCompleted

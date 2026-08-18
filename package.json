@@ -1,6 +1,6 @@
 {
   "name": "apidog-reporter-allure",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "An adapter for apidog proving reports in allure format",
   "main": "dist/index.js",
   "preferGlobal": true,
