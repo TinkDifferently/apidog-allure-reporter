@@ -4,7 +4,7 @@ export function buildUrl(host: string, path: string) {
 
 const formats = ['json', 'html', 'xml'] as const
 
-type format = 'raw' | typeof formats[number]
+export type format = 'raw' | typeof formats[number]
 
 export function joinMethods(obj: object) {
     const record = obj as Record<string, unknown>
@@ -25,7 +25,7 @@ export function safe<T>(callback: () => T, defaultValue?: T) {
     }
 }
 
-function parseContentType(contentType?: string): format {
+export function parseContentType(contentType?: string): format {
     return (
         contentType
         &&
@@ -37,7 +37,7 @@ export function prettyBody(content: string, contentType?: string): string {
     const format = parseContentType(contentType)
     switch (format) {
         case "json":
-            return safe(() => JSON.stringify(JSON.parse(content)), content) || ''
+            return safe(() => JSON.stringify(JSON.parse(content), null, 2), content) || ''
         case "html":
         case "xml":
         case "raw":

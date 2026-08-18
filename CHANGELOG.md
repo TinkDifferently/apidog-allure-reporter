@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.0] - 2026-08-18
+
+### Added
+- Configurable `Component` label via `--reporter-allure-component` or `ALLURE_COMPONENT` (default: `Control Plane`). A `Component=…` tag still overrides both.
+- Resolved request URL as an Allure parameter and request-step field (path variables + query string).
+- Request and response bodies as Allure attachments, with pretty-printed JSON.
+
+### Changed
+- Failure traces for schema, status-code, and assertion errors include the response body.
+
 ## [1.2.0] - 2026-05-15
 
 ### Added

@@ -56,6 +56,7 @@ Pass options after `-r cli,allure` using `--reporter-allure-*`:
 | `folderId` | number | — | When set, resolves the test path by folder ID instead of collection name |
 | `issueLinkLabel` | string | `Related` | Allure label name used for issue tracker tags (see Tags below) |
 | `issueLinkPattern` | string | `LB-\d+` | Regex pattern that identifies issue tracker tags (see Tags below) |
+| `component` | string | `Control Plane` | Default Allure `Component` label. Overridden by `ALLURE_COMPONENT` or a `Component=…` tag |
 
 Example:
 
@@ -85,7 +86,7 @@ The default pattern `LB-\d+` matches tags like `LB-42`. Override it to match you
 --reporter-allure-issueLinkPattern "[A-Z]+-\d+" # any uppercase prefix
 ```
 
-The `Component` label defaults to `Control-plane` when no `Component=…` tag is present.
+The `Component` label is resolved in this order: `Component=…` tag → `ALLURE_COMPONENT` env → `--reporter-allure-component` → `Control Plane`.
 
 ---
 
@@ -116,7 +117,7 @@ Each Allure test maps to one Apidog scenario execution and contains:
 - **Parameters** — environment name and CSV iteration variables
 - **Description** — list of HTTP calls in the scenario (`METHOD /path`)
 - **Steps** — one top-level step per execution item:
-  - *HTTP steps* include request headers/body, response status/headers/body, schema validation, response code validation, and per-assertion sub-steps
+  - *HTTP steps* include the resolved URL, request headers, response status/headers, schema validation, response code validation, and per-assertion sub-steps. Request and response bodies are attached as files (JSON is pretty-printed).
   - *Script steps* surface individual script errors as failed sub-steps
 - **Labels** — framework, package path, epic/feature/story hierarchy, component, tags, and issue links derived from the folder tree and test tags
 

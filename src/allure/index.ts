@@ -4,6 +4,7 @@ import {
     AllureRuntime,
     AllureStep,
     AllureTest, Category,
+    ContentType,
     Status,
     StatusDetails
 } from "allure-js-commons";
@@ -29,6 +30,7 @@ type allureWrapper = {
     endStep: (end?: number) => void
     stepStatus: (payload: { status?: Status, message?: string, trace?: string, end?: number }) => void
     testStatus: (payload: { message: string, trace?: string }) => void
+    attach: (name: string, content: string, contentType?: ContentType) => void
 }
 
 const allureConfig: AllureConfig = {
@@ -122,6 +124,17 @@ const allureAdapter = function () {
             if (message || trace) {
                 this.currentTest.statusDetails = this.testStatusDetails
             }
+        },
+        attach: function (this: allureWrapper, name, content, contentType = ContentType.TEXT) {
+            if (!content) {
+                return
+            }
+            const target = this.currentStep?.step || this.currentTest
+            if (!target) {
+                console.log('Could not attach. No step or test exists')
+                return
+            }
+            target.addAttachment(name, contentType, this.allureRuntime.writeAttachment(content, contentType))
         }
     }
     joinMethods(data)
